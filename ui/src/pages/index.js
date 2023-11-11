@@ -58,7 +58,9 @@ const MyZkApp = () => {
 
   const [transaction, setTransaction] = useState("");
 
-  useEffect(() => {}, [publicKey, privateKey, transaction, accountBalance]);
+  useEffect(() => {
+    console.log({ transaction });
+  }, [publicKey, privateKey, transaction, accountBalance]);
 
   useEffect(() => {
     const initializeO1js = async () => {
@@ -144,10 +146,10 @@ const MyZkApp = () => {
 
       // Create the zkapp object and get its state
       // console.log(first)
-      let zkApp = new SimpleZkApp(publicKey); 
-      console.log({zkApp})
-      let value = zkApp.value.get(); 
-      console.log(zkApp.value)
+      let zkApp = new SimpleZkApp(publicKey);
+      console.log({ zkApp });
+      let value = zkApp.value.get();
+      console.log(zkApp.value);
       setZkappState(value.toBase58());
       setStatus(`Found deployed zkApp, with state ${value.toBase58()}`); // Inform the user
     } catch (error) {
@@ -182,18 +184,13 @@ const MyZkApp = () => {
   };
 
   const createTransaction = async () => {
-
-
     try {
       // unfortunately, have to create the object once again, because ref does not work.
       let feePayerKey = privateKey;
       let feepayerAddress = feePayerKey.toPublicKey();
-      console.log(SimpleZkApp)
-      console.log(SimpleZkApp)
-      console.log(SimpleZkApp)
       let zkApp = new SimpleZkApp(publicKey);
 
-      // setTransaction(
+      // setTransaction
       const transaction = await Mina.transaction(
         { sender: feepayerAddress, fee },
         () => {
@@ -277,114 +274,90 @@ const MyZkApp = () => {
   };
   return (
     <>
-      <div className="max-h-screen flex flex-col justify-center items-center overflow-hidden">
-        <div className="flex max-h-[50px] justify-center items-center w-full bg-gray-800 text-white">
-          <h2 className="text-2xl font-bold mb-4">
-            NextJS TailWindCSS + ZK [WIP]
-          </h2>
-        </div>
-  
-        <div className="flex flex-col justify-center items-center my-8 border-t border-gray-200 pt-4 w-full max-w-3xl">
-          <div className="space-x-2 mb-4">
-            <h4 className="block ">public key: </h4>
-            <div>{JSON.stringify(publicKey)}</div>
+      <div className="flex h-screen items-center justify-center bg-neutral-900 text-white">
+        <div className="w-full max-w-4xl p-8 space-y-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold">
+              NextJS TailwindCSS + ZK [WIP]
+            </h2>
           </div>
-  
-          <h2 className="text-2xl font-bold mb-4">
-            Follow the steps to prove you know the answer and store it
-            on-chain:
-          </h2>
-  
-          <div className="space-y-4 mt-2 w-full">
-            {/* Steps and actions */}
-            <div className="space-y-4 mt-2">
-              {/* Step 1: Check if selected account has enough funds */}
-              <div>
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
-                  onClick={checkAccountBalance}
-                >
-                  Check Funds
-                </button>
-              </div>
 
-              {/* Step 2: Check the smart contract state on-chain */}
-              <div>
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
-                  onClick={() => getZkAppState()}
-                >
-                  Check State
-                </button>
-                {/* <p className="bg-gray-200 p-4 rounded mt-2">{zkappState || ""}</p> */}
-              </div>
+          <div className="flex flex-col items-center space-y-6">
+            <div>
+              <h4>Public Key:</h4>
+              <p className="text-sm">{JSON.stringify(publicKey)}</p>
+            </div>
 
-              {/* Step 3: Compile the smart contract */}
-              <div>
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
-                  onClick={compileZkApp}
-                >
-                  Compile Contract
-                </button>
-              </div>
+            <h2 className="text-xl font-semibold">
+              Follow the steps to prove you know the answer and store it
+              on-chain:
+            </h2>
 
-              {/* Step 4: Call the smart contract method */}
+            <div className="flex flex-col items-center space-y-4">
+              <button
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+                onClick={checkAccountBalance}
+              >
+                Check Funds
+              </button>
+
+              <button
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+                onClick={() => getZkAppState()}
+              >
+                Check State
+              </button>
+
+              <button
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+                onClick={compileZkApp}
+              >
+                Compile Contract
+              </button>
+
               <div>
                 <input
-                  className="border p-2 mr-2"
+                  className="border border-gray-300 bg-white text-black px-4 py-2 mr-2 rounded"
                   placeholder="10 / 2 + 2 = ?"
                   value={equationAnswer}
                   onChange={(e) => setEquationAnswer(e.target.value)}
                 />
                 <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
                   onClick={() => createTransaction()}
                 >
                   Call
                 </button>
               </div>
 
-              {/* Step 5: Create the zero-knowledge proof */}
-              <div>
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
-                  onClick={createProof}
-                >
-                  Create Proof
-                </button>
-              </div>
+              <button
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+                onClick={createProof}
+              >
+                Create Proof
+              </button>
 
-              {/* Step 6: Broadcast the transaction to the network */}
-              <div>
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
-                  onClick={broadcastTransaction}
-                >
-                  Broadcast
-                </button>
-              </div>
-
+              <button
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+                onClick={broadcastTransaction}
+              >
+                Broadcast
+              </button>
+            </div>
           </div>
-          </div>
-        </div>
-  
-        {/* Status Area: with scrolling */}
-        <div className="w-full max-w-3xl px-4 overflow-auto bg-gray-100 rounded-lg shadow-inner max-h-[200px]">
-          <h3 className="text-lg font-semibold my-2 text-gray-800">
-            Status Messages:
-          </h3>
 
-          <div className="text-sm text-gray-600 whitespace-pre-wrap">
-            {JSON.stringify(accountBalance)}
-            {JSON.stringify(status)}
+          <div className="overflow-auto bg-neutral-800 rounded-lg shadow-inner max-h-48 p-4">
+            <h3 className="text-lg font-semibold mb-2">Status Messages:</h3>
 
+            <pre className="text-sm whitespace-pre-wrap">
+              {JSON.stringify(accountBalance, null, 2)}
+              {JSON.stringify(status, null, 2)}
+            </pre>
           </div>
         </div>
       </div>
     </>
   );
-
 };
 
 export default MyZkApp;
