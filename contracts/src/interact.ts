@@ -1,7 +1,7 @@
 /**
- * This script can be used to interact with the Add contract, after deploying it.
+ * This script can be used to interact with the SimpleZkapp contract, after deploying it.
  *
- * We call the update() method on the contract, create a proof and send it to the chain.
+ * We call the giveAnswer() method on the contract, create a proof and send it to the chain.
  * The endpoint that we interact with is read from your config.json.
  *
  * This simulates a user interacting with the zkApp from a browser, except that here, sending the transaction happens
@@ -12,9 +12,9 @@
  * Build the project: `$ npm run build`
  * Run with node:     `$ node build/src/interact.js <deployAlias>`.
  */
+import { Mina, PrivateKey, Field, fetchAccount } from 'o1js';
 import fs from 'fs/promises';
-import { Mina, PrivateKey } from 'o1js';
-import { Add } from './Add.js';
+import { SimpleZkapp } from './Add.js';
 
 // check command line arg
 let deployAlias = process.argv[2];
@@ -58,17 +58,20 @@ const fee = Number(config.fee) * 1e9; // in nanomina (1 billion = 1.0 mina)
 Mina.setActiveInstance(Network);
 let feepayerAddress = feepayerKey.toPublicKey();
 let zkAppAddress = zkAppKey.toPublicKey();
-let zkApp = new Add(zkAppAddress);
+let zkApp = new SimpleZkapp(zkAppAddress);
+
+let { account, error } = await fetchAccount({ publicKey: zkAppAddress });
+console.log('zkApp state value: ', zkApp.value.get())
 
 let sentTx;
 // compile the contract to create prover keys
 console.log('compile the contract...');
-await Add.compile();
+await SimpleZkapp.compile();
 try {
-  // call update() and send transaction
+  // call giveAnswer() and send transaction
   console.log('build transaction and create proof...');
   let tx = await Mina.transaction({ sender: feepayerAddress, fee }, () => {
-    zkApp.update();
+    zkApp.giveAnswer(Field(7), feepayerAddress);
   });
   await tx.prove();
   console.log('send transaction...');
@@ -82,19 +85,6 @@ Success! Update transaction sent.
 
 Your smart contract state will be updated
 as soon as the transaction is included in a block:
-${getTxnUrl(config.url, sentTx.hash())}
+https://berkeley.minaexplorer.com/transaction/${sentTx.hash()}
 `);
-}
-
-function getTxnUrl(graphQlUrl: string, txnHash: string | undefined) {
-  const txnBroadcastServiceName = new URL(graphQlUrl).hostname
-    .split('.')
-    .filter((item) => item === 'minascan' || item === 'minaexplorer')?.[0];
-  const networkName = new URL(graphQlUrl).hostname
-    .split('.')
-    .filter((item) => item === 'berkeley' || item === 'testworld')?.[0];
-  if (txnBroadcastServiceName && networkName) {
-    return `https://minascan.io/${networkName}/tx/${txnHash}?type=zk-tx`;
-  }
-  return `Transaction hash: ${txnHash}`;
 }

@@ -1,3 +1,3 @@
-import { Add } from './Add.js';
+import { SimpleZkapp } from './Add.js';
 
-export { Add };
+export { SimpleZkapp };
