@@ -2,10 +2,10 @@
 
 This project is a Next.js-based user interface for interacting with zero-knowledge applications. It builds upon the foundational work done in the following repositories:
 
-- Original UI components inspired by [zkapp-ui](https://github.com/RaidasGrisk/zkapp-ui)
-- Integration with the O(1) Labs JavaScript API inspired by [zkapp-o1js](https://github.com/RaidasGrisk/zkapp-o1js)
+- Original UI components by [zkapp-ui](https://github.com/RaidasGrisk/zkapp-ui)
+- Integration with the O(1) Labs JavaScript API by [zkapp-o1js](https://github.com/RaidasGrisk/zkapp-o1js)
 
-Both of the original repositories were initially Vue.js implementations that have been adapted and re-envisioned within a Next.js framework.
+The original repository was initially Vue.js implementation that has been adapted within a Next.js framework.
 
 ## Getting Started
 
