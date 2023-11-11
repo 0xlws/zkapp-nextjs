@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-
-import { PrivateKey, fetchAccount, Mina, PublicKey } from "o1js";
+import { PrivateKey, fetchAccount, Mina, PublicKey, Field } from "o1js";
 
 let SimpleZkapp;
 
@@ -56,16 +55,14 @@ const MyZkApp = () => {
   const [loading, setLoading] = useState(false);
   const [equationAnswer, setEquationAnswer] = useState("");
   const [zkappState, setZkappState] = useState("");
-  const [appState, setAppState] = useState("");
+
   const [transaction, setTransaction] = useState("");
 
-  useEffect(() => {
-    console.log({ accountBalance });
-  }, [accountBalance]);
+  useEffect(() => {}, [publicKey, privateKey, transaction, accountBalance]);
 
   useEffect(() => {
     const initializeO1js = async () => {
-      setNotification({ message: "Loading", type: "success" });
+      setStatus({ message: "Loading", type: "success" });
       setPublicKey(PublicKey.fromBase58(prefundedAccounts[0][0]));
       setPrivateKey(PrivateKey.fromBase58(prefundedAccounts[0][1]));
 
@@ -78,7 +75,7 @@ const MyZkApp = () => {
       Mina.setActiveInstance(Network);
 
       // Update the message or close it, based on your notification system
-      setNotification({
+      setStatus({
         message: "Ready to interact with berkeley!",
         type: "info",
       });
@@ -91,56 +88,72 @@ const MyZkApp = () => {
     return <div>Loading O1js...</div>;
   }
 
-  const generateNewKeys = () => {
-    const privateKey_ = PrivateKey.random();
-    setPrivateKey(privateKey_.toBase58());
-    setPublicKey(PublicKey.fromBase58(prefundedAccounts[1][0]));
-  };
+  // const generateNewKeys = () => {
+  //   const privateKey_ = PrivateKey.random();
+  //   setPrivateKey(privateKey_.toBase58());
+  //   setPublicKey(PublicKey.fromBase58(prefundedAccounts[1][0]));
+  // };
 
   const checkAccountBalance = async () => {
+    // Check for the existence of the publicKey before making the request
     if (!publicKey) {
-      setNotification("Generate or input a key pair!");
+      setStatus("Generate or input a key pair!");
       return;
     }
 
-    setLoading(true);
+    setLoading(true); // Start loading state
     try {
+      // Attempt to fetch the account information
       const { account } = await fetchAccount({ publicKey: publicKey });
+
+      // Check if 'account' has been returned successfully
       if (account) {
-        console.log({ account });
-        setAccountBalance(account.balance);
+        console.log({ account }); // Log the account object
+        setAccountBalance(account.balance); // Update the balance in your state
+        setStatus(`Balance updated: ${account.balance}`); // Display success notification
       } else {
-        ("");
+        // Account not found or 'account' is undefined
+        setStatus("Account not found. Please check the provided key pair.");
       }
     } catch (e) {
-      ("");
+      console.error(e); // Log any errors to the console
+      setStatus("An error occurred while fetching the account balance."); // Notify the user of the error
     } finally {
-      setLoading(false);
+      setLoading(false); // End loading state
     }
   };
-
-  const getZkAppState = async (zkappAddress) => {
-    let { account, error } = await fetchAccount({
-      publicKey: PublicKey.fromBase58(zkAppAddress),
-    });
-    console.log("account", JSON.stringify(account, null, 2));
-    console.log("error", JSON.stringify(error, null, 2));
-    setStatus("See console");
-    // setStatus(JSON.stringify(account, null, 2));
-
-    if (error) {
-      return;
-    }
-
-    // create the zkapp object
+  const getZkAppState = async () => {
+    // Attempt to convert base58 address to a PublicKey and fetch the associated account
+    setStatus("Fetching zkApp state..."); // Inform the user
     try {
-      let zkApp = new SimpleZkapp(PublicKey.fromBase58(zkAppAddress));
-      let value = zkApp.value.get();
-      setZkappState(value.toBase58());
-      console.log(`Found deployed zkapp, with state ${value.toBase58()}`);
+      let { account, error } = await fetchAccount({ publicKey });
+
+      // Log the responses for debugging
+      console.log("account", JSON.stringify(account, null, 2));
+      console.log("error", JSON.stringify(error, null, 2));
+
+      // Check for any error during fetchAccount
+      if (error) {
+        setStatus("Error fetching account. See console for more details.");
+        return;
+      }
+
+      if (!account) {
+        setStatus("Account not found for the given zkApp address.");
+        return;
+      }
+
+      // Create the zkapp object and get its state
+      let zkApp = new SimpleZkapp(publicKey); // Assume SimpleZkapp takes a PublicKey
+      let value = zkApp.value.get(); // Get the zkApp state value; assuming this is synchronous
+      setZkappState(value.toBase58()); // Set the zkApp state in your application state
+      setStatus(`Found deployed zkApp, with state ${value.toBase58()}`); // Inform the user
     } catch (error) {
-      console.log(error);
-      return;
+      // Catch any other errors that could occur and log to the console
+      console.error(error);
+      setStatus(
+        "An error occurred while processing the zkApp. See console for more details."
+      );
     }
   };
 
@@ -167,18 +180,24 @@ const MyZkApp = () => {
   };
 
   const createTransaction = async (zkAppAddress) => {
+    console.log({ zkAppAddress });
+
     try {
       // unfortunately, have to create the object once again, because ref does not work.
-      let feePayerKey = PrivateKey.fromBase58(privateKey);
+      let feePayerKey = privateKey;
       let feepayerAddress = feePayerKey.toPublicKey();
-      let zkApp = new SimpleZkapp(PublicKey.fromBase58(zkAppAddress));
-      let fee = Number(0.1) * 1e9;
+      let zkApp = new SimpleZkapp(publicKey);
 
       // setTransaction(
-      await Mina.transaction({ sender: feepayerAddress, fee }, () => {
-        zkApp.giveAnswer(Field(equationAnswer), feepayerAddress);
-      });
-      // );
+      const transaction = await Mina.transaction(
+        { sender: feepayerAddress, fee },
+        () => {
+          zkApp.giveAnswer(Field(equationAnswer), feepayerAddress);
+        }
+      );
+
+      setTransaction(transaction);
+
       alert("You have got the correct answer to the equation and ...", {
         duration: 10000,
       });
@@ -230,8 +249,8 @@ const MyZkApp = () => {
     // send the transaction to the graphql endpoint
     console.log("Sending the transaction...");
     try {
-      let feePayerKey = PrivateKey.fromBase58(privateKey);
-      let sendZkapp = await transaction.value.sign([feePayerKey]).send();
+      let feePayerKey = privateKey;
+      let sendZkapp = await transaction.sign([feePayerKey]).send();
       console.log(sendZkapp);
       let txHash = await sendZkapp.hash();
       console.log(txHash);
@@ -254,29 +273,22 @@ const MyZkApp = () => {
 
   return (
     <>
-      <div className="flex justify-center items-center min-h-screen bg-gray-800 text-white">
-        <h2 className="text-2xl font-bold mb-4">
-          Before we start, make sure you have an account with some Mina in it
-        </h2>
+      <div className="max-h-screen flex flex-col justify-center items-center overflow-hidden">
+        <div className="flex max-h-[50px] justify-center items-center w-full bg-gray-800 text-white">
+          <h2 className="text-2xl font-bold mb-4">
+            {/* Before we start, make sure you have an account with some Mina in it */}
+            DEMO WIP
+          </h2>
+        </div>
 
-        <div className="space-y-4">
-          <button className="bg-blue-500 text-white px-4 py-2 rounded">
+          {/* <button className="bg-blue-500 text-white px-4 py-2 rounded">
             Generate new key pair
           </button>
           <button className="bg-blue-500 text-white px-4 py-2 rounded">
             Randomly pick keys from one of prefunded accounts
-          </button>
+          </button> */}
 
-          <div className="flex items-center space-x-2">
-            <label className="block">public key: </label>
-            <div>{JSON.stringify(publicKey)}</div>
-            {/* <input
-            className="border p-2"
-            value={publicKey}
-            onChange={(e) => setPublicKey(e.target.value)}
-          /> */}
-          </div>
-
+  
           {/* <div className="flex items-center space-x-2">
           <label className="block">private key:</label>
           <input
@@ -286,82 +298,93 @@ const MyZkApp = () => {
             onChange={(e) => setPrivateKey(e.target.value)}
           />
         </div> */}
-        </div>
 
-        <div className="my-8 border-t border-gray-200 pt-4 mt-2">
-          <h2 className="text-2xl font-bold mb-4">
-            Follow the steps to prove you know the answer and store it on-chain:
-          </h2>
+          <div className="flex flex-col justify-center items-center  my-8 border-t border-gray-200 pt-4 mt-2">
+          <div className="space-x-2">
+            <label className="block">public key: </label>
+            <div>{JSON.stringify(publicKey)}</div>
+            {/* <input
+            className="border p-2"
+            value={publicKey}
+            onChange={(e) => setPublicKey(e.target.value)}
+          /> */}
+          </div>
 
-          <div className="flex flex-col space-y-4 mt-2">
-            {/* Step 1: Check if selected account has enough funds */}
-            <div>
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-                onClick={checkAccountBalance}
-              >
-                Check Funds
-              </button>
-              <div>{JSON.stringify(accountBalance)}</div>
-            </div>
+            <h2 className="text-2xl font-bold mb-4">
+              Follow the steps to prove you know the answer and store it
+              on-chain:
+            </h2>
 
-            {/* Step 2: Check the smart contract state on-chain */}
-            <div>
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-                onClick={() => getZkAppState(publicKey)}
-              >
-                Check State
-              </button>
-              {/* <p className="bg-gray-200 p-4 rounded mt-2">{zkappState || ""}</p> */}
-              <div>{JSON.stringify(status)}</div>
-            </div>
+            <div className="space-y-4 mt-2">
+              {/* Step 1: Check if selected account has enough funds */}
+              <div>
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  onClick={checkAccountBalance}
+                >
+                  Check Funds
+                </button>
+                <div>{JSON.stringify(accountBalance)}</div>
+              </div>
 
-            {/* Step 3: Compile the smart contract */}
-            <div>
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-                onClick={compileZkApp}
-              >
-                Compile Contract
-              </button>
-            </div>
+              {/* Step 2: Check the smart contract state on-chain */}
+              <div>
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  onClick={() => getZkAppState()}
+                >
+                  Check State
+                </button>
+                {/* <p className="bg-gray-200 p-4 rounded mt-2">{zkappState || ""}</p> */}
+                <div>{JSON.stringify(status)}</div>
+              </div>
 
-            {/* Step 4: Call the smart contract method */}
-            <div>
-              <input
-                className="border p-2 mr-2"
-                placeholder="10 / 2 + 2 = ?"
-                value={equationAnswer}
-                onChange={(e) => setEquationAnswer(e.target.value)}
-              />
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-                onClick={() => createTransaction(publicKey)}
-              >
-                Call
-              </button>
-            </div>
+              {/* Step 3: Compile the smart contract */}
+              <div>
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  onClick={compileZkApp}
+                >
+                  Compile Contract
+                </button>
+              </div>
 
-            {/* Step 5: Create the zero-knowledge proof */}
-            <div>
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-                onClick={createProof}
-              >
-                Create Proof
-              </button>
-            </div>
+              {/* Step 4: Call the smart contract method */}
+              <div>
+                <input
+                  className="border p-2 mr-2"
+                  placeholder="10 / 2 + 2 = ?"
+                  value={equationAnswer}
+                  onChange={(e) => setEquationAnswer(e.target.value)}
+                />
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  onClick={() => createTransaction()}
+                >
+                  Call
+                </button>
+              </div>
 
-            {/* Step 6: Broadcast the transaction to the network */}
-            <div>
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-                onClick={broadcastTransaction}
-              >
-                Broadcast
-              </button>
-            </div>
+              {/* Step 5: Create the zero-knowledge proof */}
+              <div>
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  onClick={createProof}
+                >
+                  Create Proof
+                </button>
+              </div>
+
+              {/* Step 6: Broadcast the transaction to the network */}
+              <div>
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  onClick={broadcastTransaction}
+                >
+                  Broadcast
+                </button>
+              </div>
+
           </div>
         </div>
       </div>
