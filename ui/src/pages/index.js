@@ -2,16 +2,16 @@
 import React, { useState, useEffect } from "react";
 import { PrivateKey, fetchAccount, Mina, PublicKey, Field } from "o1js";
 
-let SimpleZkapp;
+let SimpleZkApp;
 
 (async () => {
   try {
-    // Use dynamic import to load the SimpleZkapp module
-    const zkAppModule = await import("../../../contracts/build/src");
-    SimpleZkapp = zkAppModule.SimpleZkapp;
+    // Use dynamic import to load the SimpleZkApp module
+    const zkAppModule = await import("../contracts/SimpleZkApp.js");
+    SimpleZkApp = zkAppModule.SimpleZkApp;
     // Additional initialization if needed
   } catch (error) {
-    console.error("Error importing SimpleZkapp:", error);
+    console.error("Error importing SimpleZkApp:", error);
   }
 })();
 
@@ -123,7 +123,6 @@ const MyZkApp = () => {
     }
   };
   const getZkAppState = async () => {
-    // Attempt to convert base58 address to a PublicKey and fetch the associated account
     setStatus("Fetching zkApp state..."); // Inform the user
     try {
       let { account, error } = await fetchAccount({ publicKey });
@@ -144,9 +143,12 @@ const MyZkApp = () => {
       }
 
       // Create the zkapp object and get its state
-      let zkApp = new SimpleZkapp(publicKey); // Assume SimpleZkapp takes a PublicKey
-      let value = zkApp.value.get(); // Get the zkApp state value; assuming this is synchronous
-      setZkappState(value.toBase58()); // Set the zkApp state in your application state
+      // console.log(first)
+      let zkApp = new SimpleZkApp(publicKey); 
+      console.log({zkApp})
+      let value = zkApp.value.get(); 
+      console.log(zkApp.value)
+      setZkappState(value.toBase58());
       setStatus(`Found deployed zkApp, with state ${value.toBase58()}`); // Inform the user
     } catch (error) {
       // Catch any other errors that could occur and log to the console
@@ -174,19 +176,22 @@ const MyZkApp = () => {
     // compile the zkapp
     console.log("before compiling");
     console.log("Compiling zk program...");
-    console.log(SimpleZkapp);
-    const { verificationKey } = await SimpleZkapp.compile();
+    console.log(SimpleZkApp);
+    const { verificationKey } = await SimpleZkApp.compile();
     console.log("Verification key: ", verificationKey);
   };
 
-  const createTransaction = async (zkAppAddress) => {
-    console.log({ zkAppAddress });
+  const createTransaction = async () => {
+
 
     try {
       // unfortunately, have to create the object once again, because ref does not work.
       let feePayerKey = privateKey;
       let feepayerAddress = feePayerKey.toPublicKey();
-      let zkApp = new SimpleZkapp(publicKey);
+      console.log(SimpleZkApp)
+      console.log(SimpleZkApp)
+      console.log(SimpleZkApp)
+      let zkApp = new SimpleZkApp(publicKey);
 
       // setTransaction(
       const transaction = await Mina.transaction(
@@ -270,51 +275,28 @@ const MyZkApp = () => {
       return;
     }
   };
-
   return (
     <>
       <div className="max-h-screen flex flex-col justify-center items-center overflow-hidden">
         <div className="flex max-h-[50px] justify-center items-center w-full bg-gray-800 text-white">
           <h2 className="text-2xl font-bold mb-4">
-            {/* Before we start, make sure you have an account with some Mina in it */}
-            DEMO WIP
+            NextJS TailWindCSS + ZK [WIP]
           </h2>
         </div>
-
-          {/* <button className="bg-blue-500 text-white px-4 py-2 rounded">
-            Generate new key pair
-          </button>
-          <button className="bg-blue-500 text-white px-4 py-2 rounded">
-            Randomly pick keys from one of prefunded accounts
-          </button> */}
-
   
-          {/* <div className="flex items-center space-x-2">
-          <label className="block">private key:</label>
-          <input
-            className="border p-2"
-            type="password"
-            value={privateKey}
-            onChange={(e) => setPrivateKey(e.target.value)}
-          />
-        </div> */}
-
-          <div className="flex flex-col justify-center items-center  my-8 border-t border-gray-200 pt-4 mt-2">
-          <div className="space-x-2">
-            <label className="block">public key: </label>
+        <div className="flex flex-col justify-center items-center my-8 border-t border-gray-200 pt-4 w-full max-w-3xl">
+          <div className="space-x-2 mb-4">
+            <h4 className="block ">public key: </h4>
             <div>{JSON.stringify(publicKey)}</div>
-            {/* <input
-            className="border p-2"
-            value={publicKey}
-            onChange={(e) => setPublicKey(e.target.value)}
-          /> */}
           </div>
-
-            <h2 className="text-2xl font-bold mb-4">
-              Follow the steps to prove you know the answer and store it
-              on-chain:
-            </h2>
-
+  
+          <h2 className="text-2xl font-bold mb-4">
+            Follow the steps to prove you know the answer and store it
+            on-chain:
+          </h2>
+  
+          <div className="space-y-4 mt-2 w-full">
+            {/* Steps and actions */}
             <div className="space-y-4 mt-2">
               {/* Step 1: Check if selected account has enough funds */}
               <div>
@@ -324,7 +306,6 @@ const MyZkApp = () => {
                 >
                   Check Funds
                 </button>
-                <div>{JSON.stringify(accountBalance)}</div>
               </div>
 
               {/* Step 2: Check the smart contract state on-chain */}
@@ -336,7 +317,6 @@ const MyZkApp = () => {
                   Check State
                 </button>
                 {/* <p className="bg-gray-200 p-4 rounded mt-2">{zkappState || ""}</p> */}
-                <div>{JSON.stringify(status)}</div>
               </div>
 
               {/* Step 3: Compile the smart contract */}
@@ -386,10 +366,25 @@ const MyZkApp = () => {
               </div>
 
           </div>
+          </div>
+        </div>
+  
+        {/* Status Area: with scrolling */}
+        <div className="w-full max-w-3xl px-4 overflow-auto bg-gray-100 rounded-lg shadow-inner max-h-[200px]">
+          <h3 className="text-lg font-semibold my-2 text-gray-800">
+            Status Messages:
+          </h3>
+
+          <div className="text-sm text-gray-600 whitespace-pre-wrap">
+            {JSON.stringify(accountBalance)}
+            {JSON.stringify(status)}
+
+          </div>
         </div>
       </div>
     </>
   );
+
 };
 
 export default MyZkApp;

@@ -1,8 +1,8 @@
-import { SimpleZkapp } from './Add';
+import { SimpleZkApp } from './SimpleZkApp';
 import { Field, Mina, PrivateKey, PublicKey, AccountUpdate } from 'o1js';
 
 /*
- * This file specifies how to test the `SimpleZkapp` example smart contract. It is safe to delete this file and replace
+ * This file specifies how to test the `SimpleZkApp` example smart contract. It is safe to delete this file and replace
  * with your own tests.
  *
  * See https://docs.minaprotocol.com/zkapps for more info.
@@ -17,10 +17,10 @@ describe('SimpleZkapp_', () => {
     senderKey: PrivateKey,
     zkAppAddress: PublicKey,
     zkAppPrivateKey: PrivateKey,
-    zkApp: SimpleZkapp;
+    zkApp: SimpleZkApp;
 
   beforeAll(async () => {
-    if (proofsEnabled) await SimpleZkapp.compile();
+    if (proofsEnabled) await SimpleZkApp.compile();
   });
 
   beforeEach(() => {
@@ -32,7 +32,7 @@ describe('SimpleZkapp_', () => {
       Local.testAccounts[1]);
     zkAppPrivateKey = PrivateKey.random();
     zkAppAddress = zkAppPrivateKey.toPublicKey();
-    zkApp = new SimpleZkapp(zkAppAddress);
+    zkApp = new SimpleZkApp(zkAppAddress);
   });
 
   async function localDeploy() {

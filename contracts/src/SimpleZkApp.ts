@@ -11,7 +11,7 @@ import {
 // if you give a correct answer, the state will update
 // and set value var to the publicKey a caller provided
 
-class SimpleZkapp extends SmartContract {
+class SimpleZkApp extends SmartContract {
   @state(PublicKey) value = State<PublicKey>();
 
   @method giveAnswer(answer: Field, value: PublicKey) {
@@ -34,4 +34,4 @@ class SimpleZkapp extends SmartContract {
   }
 }
 
-export { SimpleZkapp };
+export { SimpleZkApp };
