@@ -1,34 +1,31 @@
-(WIP)
+# Zkapp UI for Next.js
+
+This project is a Next.js-based user interface for interacting with zero-knowledge applications. It builds upon the foundational work done in the following repositories:
+
+- Original UI components inspired by [zkapp-ui](https://github.com/RaidasGrisk/zkapp-ui)
+- Integration with the O(1) Labs JavaScript API inspired by [zkapp-o1js](https://github.com/RaidasGrisk/zkapp-o1js)
+
+Both of the original repositories were initially Vue.js implementations that have been adapted and re-envisioned within a Next.js framework.
 
 ## Getting Started
 
-To get a local copy up and running, follow these simple example steps.
+To get started with this Next.js implementation of Zkapp UI, follow these setup instructions.
 
 ### Installation
 
-1. Clone the repository:
+1. Clone the Zkapp UI Next.js repository:
 
 ```bash
-git clone <REPOSITORY_URL>
+git clone https://github.com/0xlws/zkapp-nextjs.git
 ```
 
-Replace `<REPOSITORY_URL>` with the URL of the Git repository you want to clone.
-
-2. Navigate into the repository's directory:
+2. Navigate to the repository directory, into the `ui` directory where the UI component code resides::
 
 ```bash
-cd <REPOSITORY_NAME>
+cd zkapp-nextjs/cd
 ```
 
-Replace `<REPOSITORY_NAME>` with the name of the repository you just cloned.
-
-3. Navigate into the `ui` directory where the UI component code resides:
-
-```bash
-cd ui
-```
-
-4. Install the required dependencies:
+3. Install the required dependencies:
 
 ```bash
 yarn install
